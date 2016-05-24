@@ -6,5 +6,9 @@ require("match-media/matchMedia.addListener.js");
 require("babel-polyfill");
 __webpack_public_path__ = window.__GS_PUBLIC_PATH__;
 const Entry = require(__PATH_TO_ENTRY__).default;
-Entry.start();
+
+import routes as getRoutes from "./routes";
+import store from "./.store";
+
+Entry.start(getRoutes, store);
 

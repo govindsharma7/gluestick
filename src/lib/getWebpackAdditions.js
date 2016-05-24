@@ -43,6 +43,7 @@ export default function (isomorphic=false) {
     additionalLoaders: [],
     additionalPreLoaders: [],
     vendor: [],
+    entryPoints: {},
     plugins: []
   };
 
@@ -52,12 +53,13 @@ export default function (isomorphic=false) {
   try {
     const webpackAdditionsPath = path.join(process.cwd(), "src", "config", "webpack-additions.js");
     fs.statSync(webpackAdditionsPath);
-    const { additionalLoaders, additionalPreLoaders, vendor, plugins } = require(webpackAdditionsPath);
+    const { additionalLoaders, additionalPreLoaders, vendor, plugins, entryPoints } = require(webpackAdditionsPath);
     userAdditions = {
       additionalLoaders: isomorphic ? additionalLoaders : prepareUserAdditionsForWebpack(additionalLoaders),
       additionalPreLoaders: isomorphic ? additionalPreLoaders : prepareUserAdditionsForWebpack(additionalPreLoaders),
       vendor: vendor || [],
-      plugins: plugins || []
+      plugins: plugins || [],
+      entryPoints: entryPoints || {}
     };
   }
   catch (e) {

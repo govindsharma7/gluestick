@@ -8,7 +8,8 @@ const WebpackIsomorphicToolsPlugin = require("webpack-isomorphic-tools/plugin");
 const webpackSharedConfig = require("../config/webpack-shared-config");
 const detectEnvironmentVariables = require("../lib/detectEnvironmentVariables");
 const getWebpackAdditions = require("../lib/getWebpackAdditions").default;
-const { additionalLoaders, additionalPreLoaders, vendor, plugins } = getWebpackAdditions();
+const buildWebpackEntries = require("../lib/buildWebpackEntries").default;
+const { additionalLoaders, additionalPreLoaders, vendor, plugins, entryPoints } = getWebpackAdditions();
 const logger = require("../lib/logger");
 const logsColorScheme = require("../lib/logsColorScheme");
 
@@ -70,11 +71,30 @@ configEnvVariables.forEach((v) => {
   exposedEnvironmentVariables[v] = JSON.stringify(process.env[v]);
 });
 
+console.log({
+  ...buildWebpackEntries({
+    "/": {
+      name: entry,
+      routes: path.join(process.cwd(), "src", "config", "routes"),
+      reducers: path.join(process.cwd(), "src", "reducers")
+    },
+    ...entryPoints
+  }),
+  vendor: vendor
+});
+
 const compiler = webpack({
   context: process.cwd(),
   devtool: isProduction ? null : "cheap-module-eval-source-map",
   entry: {
-    main: entry,
+    ...buildWebpackEntries({
+      "/": {
+        name: entry,
+        routes: path.join(process.cwd(), "src", "config", "routes"),
+        reducers: path.join(process.cwd(), "src", "reducers")
+      },
+      ...entryPoints
+    }),
     vendor: vendor
   },
   module: {
@@ -100,6 +120,7 @@ const compiler = webpack({
     }),
     new webpack.IgnorePlugin(/\.server(\.js)?$/),
     new webpack.optimize.CommonsChunkPlugin("vendor", "vendor.bundle.js"),
+    new webpack.optimize.CommonsChunkPlugin("commons", "commons.bundle.js"),
     new webpack.optimize.AggressiveMergingPlugin()
   ].concat(environmentPlugins, webpackSharedConfig.plugins, plugins),
   resolve: {
