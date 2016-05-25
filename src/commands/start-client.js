@@ -29,10 +29,6 @@ const webpackIsomorphicToolsPlugin = new WebpackIsomorphicToolsPlugin(require(".
 process.env.NODE_PATH = path.join(__dirname, "../..");
 const isProduction = process.env.NODE_ENV === "production";
 
-const entry = [
-  path.join(__dirname, "../entrypoints/client.js")
-];
-
 let environmentPlugins = [];
 
 if (isProduction) {
@@ -52,12 +48,6 @@ else {
   ]);
 }
 
-// Include hot middleware in development mode only
-if (!isProduction) {
-  entry.unshift("webpack-hot-middleware/client");
-}
-
-
 // The config/application.js file is consumed on both the server side and the
 // client side. However, we want developers to have access to environment
 // constiables in there so they can override defaults with an environment
@@ -74,12 +64,12 @@ configEnvVariables.forEach((v) => {
 console.log({
   ...buildWebpackEntries({
     "/": {
-      name: entry,
+      name: "main",
       routes: path.join(process.cwd(), "src", "config", "routes"),
       reducers: path.join(process.cwd(), "src", "reducers")
     },
     ...entryPoints
-  }),
+  }, isProduction),
   vendor: vendor
 });
 
@@ -89,7 +79,7 @@ const compiler = webpack({
   entry: {
     ...buildWebpackEntries({
       "/": {
-        name: entry,
+        name: "main",
         routes: path.join(process.cwd(), "src", "config", "routes"),
         reducers: path.join(process.cwd(), "src", "reducers")
       },
@@ -106,7 +96,7 @@ const compiler = webpack({
   },
   output: {
     path: OUTPUT_PATH,
-    filename: OUTPUT_FILE,
+    filename: `[name]-${OUTPUT_FILE}.bundle`,
     chunkFilename: `[name]-${OUTPUT_FILE}`,
     publicPath: PUBLIC_PATH
   },
@@ -115,7 +105,6 @@ const compiler = webpack({
     new webpack.optimize.OccurenceOrderPlugin(),
     new webpack.NoErrorsPlugin(),
     new webpack.DefinePlugin({
-      "__PATH_TO_ENTRY__": JSON.stringify(path.join(process.cwd(), "src/config/.entry")),
       "process.env": exposedEnvironmentVariables
     }),
     new webpack.IgnorePlugin(/\.server(\.js)?$/),
