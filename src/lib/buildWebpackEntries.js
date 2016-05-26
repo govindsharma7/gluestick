@@ -44,7 +44,7 @@ import Entry from "${mainEntry}";
 import { createStore } from "gluestick-shared";
 import middleware from "${reduxMiddlewarePath}";
 
-function getStore (httpClient) {
+export function getStore (httpClient) {
   return createStore(httpClient, () => require("${reducersPath}"), middleware, (cb) => module.hot && module.hot.accept("${reducersPath}", cb), !!module.hot);
 }
 

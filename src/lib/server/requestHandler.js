@@ -8,6 +8,8 @@ import { match, RouterContext } from "react-router";
 import errorHandler from "./errorHandler";
 import Body from "./Body";
 import getHead from "./getHead";
+import getWebpackAdditions from "../getWebpackAdditions";
+const { entryPoints } = getWebpackAdditions();
 
 import logger from "../logger";
 import showHelpText, { MISSING_404_TEXT } from "../../lib/helpText";
@@ -22,30 +24,10 @@ module.exports = async function (req, res) {
     // Forward all request headers from the browser into http requests made by
     // node
     const config = require(path.join(process.cwd(), "src", "config", "application")).default;
-    const httpClient = getHttpClient(config.httpClient, req);
 
-    const Index = require(path.join(process.cwd(), "Index")).default;
-    const Entry = require(path.join(process.cwd(), "src/config/.entry")).default;
-    const store = require(path.join(process.cwd(), "src/config/.store")).default(httpClient);
-    let originalRoutes = require(path.join(process.cwd(), "src/config/routes")).default;
+    const { Index, Entry, store, getRoutes } = getRenderRequirementsFromEntrypoints(req, config);
 
-    // @TODO: Remove this in the future when people have had enough time to
-    // upgrade.  When this deprecation notice and backward compatibility check
-    // are removed, remove from templates/new/src/config/.entry as well
-    if (typeof originalRoutes !== "function") {
-      logger.warn(`
-##########################################################################
-Deprecation Notice: src/config/routes.js is expected to export a
-function that returns the routes object, not the routes object
-itself. This gives you access to the redux store so you can use it
-in async react-router methods. For a simple example see:
-https://github.com/TrueCar/gluestick/blob/develop/templates/new/src/config/routes.js
-##########################################################################
-`);
-      originalRoutes = () => originalRoutes;
-    }
-
-    const routes = prepareRoutesWithTransitionHooks(originalRoutes(store));
+    const routes = prepareRoutesWithTransitionHooks(getRoutes(store));
     match({routes: routes, location: req.path}, async (error, redirectLocation, renderProps) => {
       try {
         if (error) {
@@ -104,4 +86,21 @@ https://github.com/TrueCar/gluestick/blob/develop/templates/new/src/config/route
     errorHandler(req, res, error);
   }
 };
+
+function getRenderRequirementsFromEntrypoints (req, config) {
+  Object.keys(entryPoints).forEach(() => {
+
+  });
+  const httpClient = getHttpClient(config.httpClient, req);
+  const Index = require(path.join(process.cwd(), "Index")).default;
+  const Entry = require(path.join(process.cwd(), "src/config/.entry")).default;
+  const store = require(path.join(process.cwd(), "src/config/.entry")).getStore(httpClient);
+  const getRoutes = require(path.join(process.cwd(), "src/config/routes")).default;
+  return {
+    Index,
+    Entry,
+    store,
+    getRoutes
+  };
+}
 
