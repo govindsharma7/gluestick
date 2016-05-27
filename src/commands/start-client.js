@@ -9,7 +9,7 @@ const webpackSharedConfig = require("../config/webpack-shared-config");
 const detectEnvironmentVariables = require("../lib/detectEnvironmentVariables");
 const getWebpackAdditions = require("../lib/getWebpackAdditions").default;
 const buildWebpackEntries = require("../lib/buildWebpackEntries").default;
-const { additionalLoaders, additionalPreLoaders, vendor, plugins, entryPoints } = getWebpackAdditions();
+const { additionalLoaders, additionalPreLoaders, vendor, plugins } = getWebpackAdditions();
 const logger = require("../lib/logger");
 const logsColorScheme = require("../lib/logsColorScheme");
 
@@ -61,30 +61,11 @@ configEnvVariables.forEach((v) => {
   exposedEnvironmentVariables[v] = JSON.stringify(process.env[v]);
 });
 
-console.log({
-  ...buildWebpackEntries({
-    "/": {
-      name: "main",
-      routes: path.join(process.cwd(), "src", "config", "routes"),
-      reducers: path.join(process.cwd(), "src", "reducers")
-    },
-    ...entryPoints
-  }, isProduction),
-  vendor: vendor
-});
-
 const compiler = webpack({
   context: process.cwd(),
   devtool: isProduction ? null : "cheap-module-eval-source-map",
   entry: {
-    ...buildWebpackEntries({
-      "/": {
-        name: "main",
-        routes: path.join(process.cwd(), "src", "config", "routes"),
-        reducers: path.join(process.cwd(), "src", "reducers")
-      },
-      ...entryPoints
-    }),
+    ...buildWebpackEntries(isProduction),
     vendor: vendor
   },
   module: {

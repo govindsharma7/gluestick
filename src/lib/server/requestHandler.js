@@ -1,5 +1,6 @@
 /*global webpackIsomorphicTools*/
 import path from "path";
+import { parse as parseURL } from "url";
 import { createElement } from "react";
 import { renderToString } from "react-dom/server";
 import { runBeforeRoutes, ROUTE_NAME_404_NOT_FOUND,
@@ -8,8 +9,7 @@ import { match, RouterContext } from "react-router";
 import errorHandler from "./errorHandler";
 import Body from "./Body";
 import getHead from "./getHead";
-import getWebpackAdditions from "../getWebpackAdditions";
-const { entryPoints } = getWebpackAdditions();
+import { getWebpackEntries } from "../buildWebpackEntries";
 
 import logger from "../logger";
 import showHelpText, { MISSING_404_TEXT } from "../../lib/helpText";
@@ -48,6 +48,8 @@ module.exports = async function (req, res) {
           // grab the main component which is capable of loading routes
           // and hot loading them if in development mode
           const radiumConfig = { userAgent: req.headers["user-agent"] };
+
+          // @TODO fill this in with stuff we got from the whole entry points madness from below
           const main = createElement(Entry, {store: store, routerContext: routerContext, config: config, radiumConfig: radiumConfig});
 
           // grab the react generated body stuff. This includes the
@@ -88,17 +90,24 @@ module.exports = async function (req, res) {
 };
 
 function getRenderRequirementsFromEntrypoints (req, config) {
-  Object.keys(entryPoints).forEach(() => {
-
-  });
   const httpClient = getHttpClient(config.httpClient, req);
+  const entryPoints = getWebpackEntries();
+  const sortedEntries = Object.keys(entryPoints).sort((a, b) => b.split("/").length - a.split("/").length);
+
+  const { path: urlPath } = parseURL(req.url);
+
+  console.log("SORTED Entries", entryPoints, sortedEntries);
+
+  // @TODO: Test req.path and see which one of the entryPoints it seems to fit
+  // best, falling back to "/" if there is not a match. After that we should be
+  // able to get the Index, store and getRoutes
+
   const Index = require(path.join(process.cwd(), "Index")).default;
   const Entry = require(path.join(process.cwd(), "src/config/.entry")).default;
   const store = require(path.join(process.cwd(), "src/config/.entry")).getStore(httpClient);
   const getRoutes = require(path.join(process.cwd(), "src/config/routes")).default;
   return {
     Index,
-    Entry,
     store,
     getRoutes
   };
