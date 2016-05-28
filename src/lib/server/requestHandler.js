@@ -10,6 +10,7 @@ import errorHandler from "./errorHandler";
 import Body from "./Body";
 import getHead from "./getHead";
 import { getWebpackEntries } from "../buildWebpackEntries";
+import isChildPath from "../isChildPath";
 
 import logger from "../logger";
 import showHelpText, { MISSING_404_TEXT } from "../../lib/helpText";
@@ -25,7 +26,8 @@ module.exports = async function (req, res) {
     // node
     const config = require(path.join(process.cwd(), "src", "config", "application")).default;
 
-    const { Index, Entry, store, getRoutes } = getRenderRequirementsFromEntrypoints(req, config);
+    const Entry = require(path.join(process.cwd(), "src/config/.entry")).default;
+    const { Index, store, getRoutes } = getRenderRequirementsFromEntrypoints(req, config);
 
     const routes = prepareRoutesWithTransitionHooks(getRoutes(store));
     match({routes: routes, location: req.path}, async (error, redirectLocation, renderProps) => {
@@ -50,11 +52,11 @@ module.exports = async function (req, res) {
           const radiumConfig = { userAgent: req.headers["user-agent"] };
 
           // @TODO fill this in with stuff we got from the whole entry points madness from below
-          const main = createElement(Entry, {store: store, routerContext: routerContext, config: config, radiumConfig: radiumConfig});
+          const main = createElement(Entry, {store, routerContext, config, radiumConfig, getRoutes});
 
           // grab the react generated body stuff. This includes the
           // script tag that hooks up the client side react code.
-          const body = createElement(Body, {html: renderToString(main), config: config, initialState: store.getState()});
+          const body = createElement(Body, {html: renderToString(main), entryPoint: "main", config: config, initialState: store.getState()});
           const head = getHead(config, webpackIsomorphicTools.assets()); // eslint-disable-line webpackIsomorphicTools
 
           if (renderProps.routes[renderProps.routes.length - 1].name === ROUTE_NAME_404_NOT_FOUND) {
@@ -92,24 +94,28 @@ module.exports = async function (req, res) {
 function getRenderRequirementsFromEntrypoints (req, config) {
   const httpClient = getHttpClient(config.httpClient, req);
   const entryPoints = getWebpackEntries();
-  const sortedEntries = Object.keys(entryPoints).sort((a, b) => b.split("/").length - a.split("/").length);
+  const sortedEntries = Object.keys(entryPoints).sort((a, b) => {
+    const bSplitLength = b.split("/").length;
+    const aSplitLength = a.split("/").length;
+    if (bSplitLength === aSplitLength) {
+      return b.length - a.length;
+    }
+
+    return bSplitLength - aSplitLength;
+  });
 
   const { path: urlPath } = parseURL(req.url);
 
-  console.log("SORTED Entries", entryPoints, sortedEntries);
-
-  // @TODO: Test req.path and see which one of the entryPoints it seems to fit
-  // best, falling back to "/" if there is not a match. After that we should be
-  // able to get the Index, store and getRoutes
-
-  const Index = require(path.join(process.cwd(), "Index")).default;
-  const Entry = require(path.join(process.cwd(), "src/config/.entry")).default;
-  const store = require(path.join(process.cwd(), "src/config/.entry")).getStore(httpClient);
-  const getRoutes = require(path.join(process.cwd(), "src/config/routes")).default;
-  return {
-    Index,
-    store,
-    getRoutes
-  };
+  for (const path of sortedEntries) {
+    if (isChildPath(path, urlPath)) {
+      const { routes, index, name, filePath } = entryPoints[path];
+      return {
+        Index: require(index + ".js").default,
+        store: require(filePath).getStore(httpClient),
+        getRoutes: require(routes).default,
+        name
+      };
+    }
+  }
 }
 

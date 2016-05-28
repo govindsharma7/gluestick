@@ -1,4 +1,8 @@
 export default function isChildPath (parent, child) {
+  if (parent === "/") {
+    return true;
+  }
+
   const parentSplit = parent.split("/");
   const childSplit = child.split("/");
   const parentSplitLength = parentSplit.length;
@@ -8,7 +12,7 @@ export default function isChildPath (parent, child) {
   }
 
   for (let i = 0; i < parentSplitLength; i++) {
-    if (parentSplit[0] !== childSplit[0]) {
+    if (parentSplit[i] !== childSplit[i]) {
       return false;
     }
   }

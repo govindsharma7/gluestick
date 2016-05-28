@@ -24,7 +24,7 @@ export function getWebpackEntries () {
     const fileName = entry.name.replace(/\W/, "-");
     output[key] = {
       ...entry,
-      path: `${path.join(BASE_PATH, fileName)}.js`,
+      filePath: `${path.join(BASE_PATH, fileName)}.js`,
       routes: entry.routes || path.join(CWD, "src", "config", "routes", fileName),
       reducers: entry.reducers || path.join(CWD, "src", "reducers", fileName),
       index: entry.index || path.join(CWD, "Index")
@@ -46,9 +46,9 @@ export default function buildWebpackEntries (isProduction) {
   const entries = getWebpackEntries();
   for (const key in entries) {
     const entry = entries[key];
-    const { path } = entry;
-    fs.outputFileSync(path, getEntryPointContent(entry));
-    output[key] = [path];
+    const { filePath } = entry;
+    fs.outputFileSync(filePath, getEntryPointContent(entry));
+    output[key] = [filePath];
 
     // Include hot middleware in development mode only
     if (!isProduction) {
@@ -78,7 +78,9 @@ export function getStore (httpClient) {
   return createStore(httpClient, () => require("${reducers}"), middleware, (cb) => module.hot && module.hot.accept("${reducers}", cb), !!module.hot);
 }
 
-Entry.start(getRoutes, getStore);
+if (typeof window === "object") {
+  Entry.start(getRoutes, getStore);
+}
 `;
 
   return output;

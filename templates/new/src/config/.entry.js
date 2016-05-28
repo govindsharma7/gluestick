@@ -11,10 +11,6 @@ import config from "./application";
 const httpClient = getHttpClient(config.httpClient);
 
 export default class Entry extends Component {
-  static defaultProps = {
-    store: store(httpClient)
-  };
-
   render () {
     const {
       routerContext,

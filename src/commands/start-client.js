@@ -20,7 +20,7 @@ if (assetPath.substr(-1) !== "/") {
 
 const PORT = 8888;
 const OUTPUT_PATH = path.join(process.cwd(), "build");
-const OUTPUT_FILE = "main.bundle.js";
+const OUTPUT_FILE = "app.bundle.js";
 const PUBLIC_PATH = assetPath;
 
 const webpackIsomorphicToolsPlugin = new WebpackIsomorphicToolsPlugin(require("../config/webpack-isomorphic-tools-config"))
@@ -143,3 +143,4 @@ module.exports = function (buildOnly) {
     });
   }
 };
+
