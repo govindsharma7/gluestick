@@ -24,6 +24,7 @@ export function getWebpackEntries () {
     const fileName = entry.name.replace(/\W/, "-");
     output[key] = {
       ...entry,
+      fileName: fileName,
       filePath: `${path.join(BASE_PATH, fileName)}.js`,
       routes: entry.routes || path.join(CWD, "src", "config", "routes", fileName),
       reducers: entry.reducers || path.join(CWD, "src", "reducers", fileName),
@@ -46,13 +47,13 @@ export default function buildWebpackEntries (isProduction) {
   const entries = getWebpackEntries();
   for (const key in entries) {
     const entry = entries[key];
-    const { filePath } = entry;
+    const { filePath, fileName } = entry;
     fs.outputFileSync(filePath, getEntryPointContent(entry));
-    output[key] = [filePath];
+    output[fileName] = [filePath];
 
     // Include hot middleware in development mode only
     if (!isProduction) {
-      output[key].unshift("webpack-hot-middleware/client");
+      output[fileName].unshift("webpack-hot-middleware/client");
     }
   }
 
