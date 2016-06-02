@@ -27,7 +27,7 @@ module.exports = async function (req, res) {
     const config = require(path.join(process.cwd(), "src", "config", "application")).default;
 
     const Entry = require(path.join(process.cwd(), "src/config/.entry")).default;
-    const { Index, store, getRoutes } = getRenderRequirementsFromEntrypoints(req, config);
+    const { Index, store, getRoutes, fileName } = getRenderRequirementsFromEntrypoints(req, config);
 
     const routes = prepareRoutesWithTransitionHooks(getRoutes(store));
     match({routes: routes, location: req.path}, async (error, redirectLocation, renderProps) => {
@@ -56,7 +56,7 @@ module.exports = async function (req, res) {
 
           // grab the react generated body stuff. This includes the
           // script tag that hooks up the client side react code.
-          const body = createElement(Body, {html: renderToString(main), entryPoint: "main", config: config, initialState: store.getState()});
+          const body = createElement(Body, {html: renderToString(main), entryPoint: fileName, config: config, initialState: store.getState()});
           const head = getHead(config, webpackIsomorphicTools.assets()); // eslint-disable-line webpackIsomorphicTools
 
           if (renderProps.routes[renderProps.routes.length - 1].name === ROUTE_NAME_404_NOT_FOUND) {
@@ -108,12 +108,12 @@ function getRenderRequirementsFromEntrypoints (req, config) {
 
   for (const path of sortedEntries) {
     if (isChildPath(path, urlPath)) {
-      const { routes, index, name, filePath } = entryPoints[path];
+      const { routes, index, fileName, filePath } = entryPoints[path];
       return {
         Index: require(index + ".js").default,
         store: require(filePath).getStore(httpClient),
         getRoutes: require(routes).default,
-        name
+        fileName
       };
     }
   }

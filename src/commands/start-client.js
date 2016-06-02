@@ -77,8 +77,8 @@ const compiler = webpack({
   },
   output: {
     path: OUTPUT_PATH,
-    filename: `[name]-${OUTPUT_FILE}.bundle`,
-    chunkFilename: `[name]-${OUTPUT_FILE}`,
+    filename: `[name]-${OUTPUT_FILE}`,
+    chunkFilename: `[name]-chunk-${OUTPUT_FILE}`,
     publicPath: PUBLIC_PATH
   },
   plugins: [

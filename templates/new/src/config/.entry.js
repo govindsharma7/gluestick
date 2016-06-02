@@ -27,9 +27,9 @@ export default class Entry extends Component {
   }
 }
 
-Entry.start = function (getRoutes, store) {
-  const newStore = store(httpClient);
-  match({ history: browserHistory, routes: getRoutes(store)}, (error, redirectLocation, renderProps) => {
+Entry.start = function (getRoutes, getStore, match=match, history=browserHistory) {
+  const newStore = getStore(httpClient);
+  match({ history, routes: getRoutes(newStore)}, (error, redirectLocation, renderProps) => {
     const entry = (
       <Entry
         radiumConfig={{userAgent: window.navigator.userAgent}}

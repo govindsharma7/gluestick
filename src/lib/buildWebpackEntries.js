@@ -49,7 +49,7 @@ export default function buildWebpackEntries (isProduction) {
     const entry = entries[key];
     const { filePath, fileName } = entry;
     fs.outputFileSync(filePath, getEntryPointContent(entry));
-    output[fileName] = [filePath];
+    output[fileName] = [path.join(__dirname, "..", "entrypoints", "client.js"), filePath];
 
     // Include hot middleware in development mode only
     if (!isProduction) {
@@ -76,7 +76,8 @@ import { createStore } from "gluestick-shared";
 import middleware from "${reduxMiddlewarePath}";
 
 export function getStore (httpClient) {
-  return createStore(httpClient, () => require("${reducers}"), middleware, (cb) => module.hot && module.hot.accept("${reducers}", cb), !!module.hot);
+  const store = createStore(httpClient, () => require("${reducers}"), middleware, (cb) => module.hot && module.hot.accept("${reducers}", cb), !!module.hot);
+  return store;
 }
 
 if (typeof window === "object") {
