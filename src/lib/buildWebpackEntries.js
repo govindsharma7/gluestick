@@ -50,7 +50,6 @@ export default function buildWebpackEntries (isProduction) {
   for (const key in entries) {
     const entry = entries[key];
     const { filePath, fileName } = entry;
-    console.log("PPP", filePath);
     fs.outputFileSync(filePath, getEntryPointContent(entry));
     output[fileName] = [path.join(__dirname, "..", "entrypoints", "client.js"), filePath];
 
