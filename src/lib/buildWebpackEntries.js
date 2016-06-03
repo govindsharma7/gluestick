@@ -1,22 +1,24 @@
 import fs from "fs-extra";
 import path from "path";
 import getWebpackAdditions from "./getWebpackAdditions";
-const { entryPoints: additionalEntryPoints } = getWebpackAdditions();
 
-const CWD = process.cwd();
-const BASE_PATH = path.join(CWD, "src", "config", ".entries");
+function getBasePath () {
+  return path.join(process.cwd(), "src", "config", ".entries");
+}
 
 export function getWebpackEntries () {
   const output = {};
+  const cwd = process.cwd();
+  const basePath = getBasePath();
 
   // setup default
   const entryPoints = {
     "/": {
       name: "main",
-      routes: path.join(process.cwd(), "src", "config", "routes"),
-      reducers: path.join(process.cwd(), "src", "reducers")
+      routes: path.join(cwd, "src", "config", "routes"),
+      reducers: path.join(cwd, "src", "reducers")
     },
-    ...additionalEntryPoints
+    ...getWebpackAdditions().entryPoints
   };
 
   Object.keys(entryPoints).forEach((key) => {
@@ -25,10 +27,10 @@ export function getWebpackEntries () {
     output[key] = {
       ...entry,
       fileName: fileName,
-      filePath: `${path.join(BASE_PATH, fileName)}.js`,
-      routes: entry.routes || path.join(CWD, "src", "config", "routes", fileName),
-      reducers: entry.reducers || path.join(CWD, "src", "reducers", fileName),
-      index: entry.index || path.join(CWD, "Index")
+      filePath: `${path.join(basePath, fileName)}.js`,
+      routes: entry.routes || path.join(cwd, "src", "config", "routes", fileName),
+      reducers: entry.reducers || path.join(cwd, "src", "reducers", fileName),
+      index: entry.index || path.join(cwd, "Index")
     };
   });
 
@@ -38,16 +40,17 @@ export function getWebpackEntries () {
 
 export default function buildWebpackEntries (isProduction) {
   const output = {};
-
+  const basePath = getBasePath();
 
   // Clean slate
-  fs.removeSync(BASE_PATH);
-  fs.ensureDirSync(BASE_PATH);
+  fs.removeSync(basePath);
+  fs.ensureDirSync(basePath);
 
   const entries = getWebpackEntries();
   for (const key in entries) {
     const entry = entries[key];
     const { filePath, fileName } = entry;
+    console.log("PPP", filePath);
     fs.outputFileSync(filePath, getEntryPointContent(entry));
     output[fileName] = [path.join(__dirname, "..", "entrypoints", "client.js"), filePath];
 
@@ -60,11 +63,12 @@ export default function buildWebpackEntries (isProduction) {
   return output;
 }
 
-export function getEntryPointContent (entry) {
+function getEntryPointContent (entry) {
+  const cwd = process.cwd();
   const { routes, index, reducers } = entry;
-  const reduxMiddlewarePath = path.join(CWD, "src", "config", "redux-middleware");
-  const config = path.join(CWD, "src", "config", "application");
-  const mainEntry = path.join(CWD, "src", "config", ".entry");
+  const reduxMiddlewarePath = path.join(cwd, "src", "config", "redux-middleware");
+  const config = path.join(cwd, "src", "config", "application");
+  const mainEntry = path.join(cwd, "src", "config", ".entry");
   const output = `import getRoutes from "${routes}";
 
 // Make sure that webpack considers new dependencies introduced in the Index
